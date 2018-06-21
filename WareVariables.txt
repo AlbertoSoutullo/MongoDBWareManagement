@@ -1,0 +1,2 @@
+origen destino envio tipo
+fecha peso volumen nombre origen destino envio tipo telefono email NIF mercancias densidad
