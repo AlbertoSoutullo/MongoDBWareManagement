@@ -8,7 +8,7 @@ Every <b>Ware</b> is assigned to a <b>Wagon</b>, and has:
   <li>Unique ID</li>
   <li>Ware tipology</li>
   <li>Shipping type</li>
-  <li>Volumn</li>
+  <li>Volume</li>
   <li>Weight</li>
   <li>Shipping date</li>
   <li>Origin (We want to save Location and Geolocation)</li>
@@ -25,7 +25,7 @@ About the <b>Wagon</b>:
 <ul>
   <li>Unique ID</li>
   <li>Maximun Weight</li>
-  <li>Maximun Volumn</li>
+  <li>Maximun Volume</li>
 </ul>
 
 Since we know that maybe in the future we can modify and increment variables on our database, we will include obligatory variables, and addmited varialbes in .txt.
@@ -34,7 +34,7 @@ In order to test this, we will perform some querys:
 <ul>
   <li>1. List all wares of a client given.</li>
   <li>2. List every wares with origin and destination given.</li>
-  <li>3. Calculate total weight and total volumn of a given client a given day. </li>
+  <li>3. Calculate total weight and total volume of a given client a given day. </li>
   <li>4. Calculate average density of all wares of a given client a given year.</li>
   <li>5. Shipping number for every month between an origin and a destination given.</li>
   <li>6. 3 destinations which have received more shippings with their number, for an origin and year given.</li>
