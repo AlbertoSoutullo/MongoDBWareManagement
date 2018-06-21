@@ -1,92 +1,95 @@
+from Client import Client
+from Wagon import Wagon
+from Ware import Ware
+
 __author__ = 'Alberto Soutullo'
 
 from pymongo import MongoClient
 
 
 #Queries:
-# Q1: Listado de todas las mercancías de un cliente.
-nombre_cliente = 'Cafes el amanencer'
-Q1 = [{'$match': {'nombre': nombre_cliente}}]
-#db.Mercancia.aggregate([{"$match":{"nombre":"Cafes el amanencer"}}])
 
+# Q1: List all wares of a client given.
+client_name = 'Cafes el amanencer'
+Q1 = [{'$match': {'name': client_name}}]
 
-# Q2: Listado de mercancias con origen y destino que se indiquen.
-origen = "Cadiz"
-destino = "Castellon"
-Q2 = [{"$match": {"$and": [ {"origen": origen}, {"destino": destino}]}}]
-#db.Mercancia.aggregate([{"$match" : {"$and" : [ {"origen":"Cadiz"}, {"destino" : "Castellon"}]}}])
+# Q2: List every wares with origin and destination given.
+origin = "Cadiz"
+destination = "Castellon"
+Q2 = [{"$match": {"$and": [{"origin": origin}, {"destination": destination}]}}]
 
+# Q3: Calculate total weight and total volume of a given client a given day.
+# dia = timedate.timedate(2003, 11, 24)
+day = "ISODate(2003-11-24)"
+client = "Cafes el amanencer"
+Q3 = [{"$match": {"name": client, "fecha": day}},
+      {"$group": {"_id": {"name": "$name", "date": "$date"},
+                  "totalWeight": {"$sum": "$weight"}, "totalVolume": {"$sum": "$volume"}}}]
 
-# Q3: Calcular el peso y volumen total de las mercancías de un cliente un día determinado
-#dia = timedate.timedate(2003, 11, 24)
-dia = "ISODate(2003-11-24)"
-cliente = "Cafes el amanencer"
-Q3 = [{"$match":{"nombre": cliente, "fecha": dia}}, {"$group": {"_id": {"nombre": "$nombre", "fecha":"$fecha"}, "totalPeso":{ "$sum":"$peso"}, "totalVolumen" :{"$sum": "$volumen"}}}]
-#db.Mercancia.aggregate([{"$match":{"nombre":"Cafes el amanencer", "fecha":ISODate("2003-11-24")}}, {"$group":{_id:{"nombre":"$nombre", "fecha":"$fecha"}, totalPeso:{$sum:"$peso"}, totalVolumen:{$sum:"$volumen"}}}])
+# Q4: Calculate average density of all wares of a given client a given year.
+client = "Cafes el amanencer"
+year = 2001
+Q4 = [{"$match": {"name": client}},
+      {"$project": {"name": "$name", "weight": "$weight", "volume": "$volume", "year": {"$year": "$date"}}},
+      {"$match": {"year": year}},
+      {"$group": {"_id": {"name": "$name", "year": "$year"}, "density": {"$avg": {"$divide": ["$weight", "$volume"]}}}}]
 
+# Q5: Shipping number for every month between an origin and a destination given.
+origin = "Cadiz"
+destination = "Castellon"
+Q5 = [{"$match": {"origin": origin, "destination": destination}},
+      {"$project": {"month": {"$month": "$date"}, "year": {"$year": "$date"}}},
+      {"$group": {"_id": {"month": "$month", "year": "$year"}, "shipments": {"$sum": 1}}},
+      {"$group": {"_id": "$_id.month", "totalShipments": {"$sum": "$shipments"}, "totalYears": {"$sum": 1}}},
+      {"$project": {"_id": 0, "month": "$_id", "averageShipping": {"$divide": ["$totalShipments", "$totalYears"]}}}]
 
-# Q4: Calcular el densidad media de las mercancías de un cliente a lo largo de un año.
-cliente = "Cafes el amanencer"
-anho = 2001
-Q4 = [{"$match": {"nombre": cliente}}, {"$project": {"nombre":"$nombre", "peso":"$peso", "volumen":"$volumen", "year":{"$year":"$fecha"}}}, {"$match":{"year": anho}}, {"$group": {"_id": {"nombre": "$nombre", "year":"$year"}, "densidad": {"$avg":{"$divide":["$peso", "$volumen"]}}}}]
-#db.Mercancia.aggregate([{"$match":{"nombre":"Cafes el amanencer"}}, {$project: {nombre:"$nombre", peso:"$peso", volumen:"$volumen", year:{$year:"$fecha"}}}, {"$match":{"year":2001}}, {$group: {_id:{nombre:"$nombre", year:"$year"}, densidad:{$avg:{$divide:["$peso", "$volumen"]}}}}])
+# Q6: 3 destinations which have received more shipments with their number, for an origin and year given.
+origin = "Cadiz"
+year = 2003
+destinations_number = 3
+Q6 = [{"$match": {"origin": origin}},
+      {"$project": {"origin": "$origin", "destination": "$destination", "year": {"$year": "$year"}}},
+      {"$match": {"year": year}},
+      {"$group": {"_id": "$destination", "shipments": {"$sum": 1}}},
+      {"$sort": {"shipments": -1}},
+      {"$limit": destinations_number}]
 
+# Q7: Wares within a 100km circle distance of a destination given, ordered by distance.
+latitude = -16.2536378
+longitude = 28.4597823
+distance = 100000
+Q7 = [{"$geoNear": {"near": {"type": "Point", "coordinates": [latitude,  longitude]},
+                    "maxDistance": distance, "spherical": "true", "distanceField": "distance",
+                    "distanceMultiplier": 0.001, "includeLocs": "geolocDestino"}},
+      {"$sort": {"distance": 1}}]
 
-# Q5: Calcular el número medio de envíos por mes entre un origen y un destino.
-origen = "Cadiz"
-destino = "Castellon"
-Q5 = [{"$match": {"origen": origen, "destino": destino}}, {"$project": {"mes": {"$month": "$fecha"}, "anho": {"$year": "$fecha"}}}, {"$group": {"_id": {"mes": "$mes", "anho": "$anho"}, "envios": {"$sum": 1}}}, {"$group": {"_id": "$_id.mes", "totalEnvios": {"$sum": "$envios"}, "anhosTotales": {"$sum": 1}}}, {"$project": {"_id": 0, "mes": "$_id", "mediaEnvios": {"$divide": ["$totalEnvios", "$anhosTotales"]}}}]
-#db.Mercancia.aggregate([{"$match": {"origen": "Cadiz", "destino": "Castellon"}}, {"$project": {"mes": {"$month": "$fecha"}, "anho": {"$year": "$fecha"}}}, {"$group": {"_id": {"mes": "$mes", "anho": "$anho"}, "envios": {"$sum": 1}}}, {"$group": {"_id": "$_id.mes", "totalEnvios": {"$sum": "$envios"}, "anhosTotales": {"$sum": 1}}}, {"$project": {"_id": 0, "mes": "$_id", "mediaEnvios": {"$divide": ["$totalEnvios", "$anhosTotales"]}}}])
+# Q8: All wares within a wagon.
+wagon_id = 1330
+Q8 = [{"$match": {"id": wagon_id}}, {"$project": {"_id": 0, "wages": 1}}]
 
-
-# Q6: Listado con los tres destinos con más envíos y número de envíos para un origen determinado y un año determinado
-origen = "Cadiz"
-anho = 2003
-cantidad_destinos = 3
-Q6 = [{"$match": {"origen": origen}}, {"$project":{"origen":"$origen", "destino":"$destino", "anho":{"$year": "$fecha"}}}, {"$match": {"anho": anho}}, {"$group":{"_id":"$destino", "envios":{"$sum":1}}}, {"$sort":{"envios":-1}}, {"$limit": cantidad_destinos}]
-#db.Mercancia.aggregate([{$match:{"origen": "Cadiz"}}, {"$project":{"origen":"$origen", "destino":"$destino", anho:{"$year": "$fecha"}}}, {$match:{"anho":2003}}, {$group:{_id:"$destino", envios:{$sum:1}}}, {$sort:{"envios":-1}}, {$limit:3}])
-
-
-# Q7: Listado de mercancías con destino cerca de unas coordenadas determinadas (100km de distancia máxima) ordenadas por orden de distancia.
-latitud = -16.2536378
-longitud = 28.4597823
-distancia = 100000
-Q7 = [{"$geoNear": {"near": { "type": "Point", "coordinates": [ latitud,  longitud]}, "maxDistance": distancia, "spherical": "true", "distanceField": "distancia", "distanceMultiplier": 0.001, "includeLocs": "geolocDestino"}}, {"$sort": {"distancia": 1}}]
-#db.Mercancia.aggregate([{$geoNear: {near: { type: "Point", coordinates: [ -16.2536378, 28.4597823 ]}, maxDistance: 100000, spherical: true, distanceField: "distancia", distanceMultiplier: 0.001, includeLocs: "geolocDestino"}}, {$sort: {"distancia": 1}}])
-#Por algún motivo repite coordenadas para mismos lugares.
-
-# Q8: Listado de mercancías existentes en un vagón (mostrar todos los atributos de las mercancías)
-id_vagon = 1330
-Q8 = [{"$match":{"id":id_vagon}}, {"$project":{"_id": 0, "mercancias": 1}}]
-#db.Vagon.aggregate([{"$match":{id:1330}}, {$project:{_id:0, mercancias:1}}]).pretty()
-
-
-# Q9: Tipos de mercancías existentes en un vagón y número de mercancías de cada tipo.
-id_vagon = 1330
-Q9 = [{"$match": {"id": id_vagon}}, {"$unwind": "$mercancias"}, {"$group": {"_id": "$mercancias.tipo", "count": {"$sum": 1}}}]
-#db.Vagon.aggregate([{"$match":{id:1330}}, {"$unwind":"$mercancias"}, {$group:{_id:"$mercancias.tipo", count:{$sum:1}}}])
-
-
+# Q9: All kind of wares existent in a wagon and how many of each one.
+wagon_id = 1330
+Q9 = [{"$match": {"id": wagon_id}}, {"$unwind": "wares"},
+      {"$group": {"_id": "wares.type", "count": {"$sum": 1}}}]
 
 if __name__ == '__main__':
-    import json
 
     client = MongoClient()
-    db = client['Practica1']
+    db = client['TrainProject']
 
-    Ware.init_class(db['Mercancia'], "MercanciaVariables.txt")
-    Client.init_class(db['Cliente'], "ClienteVariables.txt")
-    Wagon.init_class(db['Vagon'], "VagonVariables.txt")
+    Ware.init_class(db['Ware'],     "templates/WareVariables.txt")
+    Client.init_class(db['Client'], "templates/ClientVariables.txt")
+    Wagon.init_class(db['Wagon'],   "templates/WagonVariables.txt")
 
+    #1 method for queries and print
     cursor = db.Mercancia.aggregate(Q3)
 
     while cursor.alive:
         document = cursor.next()
         print(document)
 
-
-
-    #RELLENAR
+    #2 method to fulfill
+    # RELLENAR
     # dataFile = open('tesm.data', 'r')
     # data = json.load(dataFile)
     #

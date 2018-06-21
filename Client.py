@@ -1,4 +1,4 @@
-from modelCursor import ModelCursor
+from ModelCursor import ModelCursor
 
 
 class Client(object):
@@ -55,7 +55,7 @@ class Client(object):
         return cursor
 
     @classmethod
-    def init_class(cls, db, vars_path="model_name.vars"):
+    def init_class(cls, db, vars_path):
         """ Initialize class variables
         Paremeters:
             db (MongoClient) -- Conection with MongoDB

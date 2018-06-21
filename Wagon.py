@@ -1,4 +1,4 @@
-from modelCursor import ModelCursor
+from ModelCursor import ModelCursor
 
 
 class Wagon(object):
@@ -13,9 +13,9 @@ class Wagon(object):
             if i not in kwargs.keys():
                 raise ValueError("Required Values not admitted. Object not updated.")
 
-        self.__dict__['goods'] = []
+        self.__dict__['wares'] = []
         self.__dict__.update(kwargs)
-        self.__dict__['_remainingVolumn'] = self.volumn
+        self.__dict__['_remainingVolume'] = self.volume
         self.__dict__['_remainingWeight'] = self.weight
 
         if '_id' not in kwargs.keys():
@@ -37,11 +37,11 @@ class Wagon(object):
                     if type(self.__dict__[key]) is list:
                         if key not in json.keys():
                             json[key] = []
-                        goods = self.__dict__[key]
-                        for position in goods:
+                        wares = self.__dict__[key]
+                        for position in wares:
                             if 'mod_params' in position.__dict__:
-                                good = {k: position.__dict__[k] for k in position.__dict__['mod_params'] if k in position.__dict__}
-                                json[key].append(good)
+                                ware = {k: position.__dict__[k] for k in position.__dict__['mod_params'] if k in position.__dict__}
+                                json[key].append(ware)
                             else:
                                 json[key].append(position)
                     else:
@@ -62,16 +62,13 @@ class Wagon(object):
                 if key not in self.mod_params:
                     self.mod_params.append(key)
 
-    def assign_good(self, good):
-        # if mercancia in self.mercancias:
-        #     raise ValueError("Mercancia already in Vagon.")
-
-        if self._remainingVolume > good.volumn:
-            if self._remainingWeight > good.weight:
-                self._remainingVolume -= good.volumn
-                self._remainingWeight -= good.weight
-                self.mercancias.append(good)
-                self.update(mercancias=self.__dict__['goods'])
+    def assign_ware(self, ware):
+        if self._remainingVolume > ware.volume:
+            if self._remainingWeight > ware.weight:
+                self._remainingVolume -= ware.volume
+                self._remainingWeight -= ware.weight
+                self.wares.append(ware)
+                self.update(mercancias=self.__dict__['wares'])
             else:
                 print("Weight not admitted. Mercancia not added.")
                 #raise ValueError("Weight not admitted. Mercancia not added.")
@@ -79,15 +76,15 @@ class Wagon(object):
             print("Volume not admitted. Mercancia not added.")
             #raise ValueError("Volume not admitted. Mercancia not added.")
 
-    def unassign_good(self, good):
-        if good in self.goods:
-            self._remainingWeight += good.weight
-            self._remainingVolume += good.volumn
-            self.goods.remove(good)
-            self.update(mercancias=self.__dict__['goods'])
+    def unassign_ware(self, ware):
+        if ware in self.wares:
+            self._remainingWeight += ware.weight
+            self._remainingVolume += ware.volume
+            self.wares.remove(ware)
+            self.update(mercancias=self.__dict__['wares'])
             self.save()
         else:
-            raise ValueError("Good not found.")
+            raise ValueError("Ware not found.")
 
     @classmethod
     def query(cls, query):
