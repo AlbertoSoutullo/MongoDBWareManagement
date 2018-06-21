@@ -1,2 +1,2 @@
-nombre
-telefono email NIF mercancias nombre
+name
+telephone email NIF goods name

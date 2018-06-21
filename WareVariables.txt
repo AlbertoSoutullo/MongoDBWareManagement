@@ -1,2 +1,2 @@
-origen destino envio tipo
-fecha peso volumen nombre origen destino envio tipo telefono email NIF mercancias densidad
+origin destination shippment type
+date weight volumn name origin destination shippment type telephone email NIF goods density

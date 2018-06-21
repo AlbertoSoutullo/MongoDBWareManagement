@@ -1,2 +1,2 @@
 id
-volumen peso mercancias _remainingVolume _remainingWeight id mod_params
+volumn weight goods _remainingVolume _remainingWeight id mod_params
