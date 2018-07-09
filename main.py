@@ -1,3 +1,5 @@
+import json
+
 from Client import Client
 from Wagon import Wagon
 from Ware import Ware
@@ -5,7 +7,6 @@ from Ware import Ware
 __author__ = 'Alberto Soutullo'
 
 from pymongo import MongoClient
-
 
 #Queries:
 
@@ -72,54 +73,56 @@ wagon_id = 1330
 Q9 = [{"$match": {"id": wagon_id}}, {"$unwind": "wares"},
       {"$group": {"_id": "wares.type", "count": {"$sum": 1}}}]
 
-if __name__ == '__main__':
 
-    client = MongoClient()
-    db = client['TrainProject']
-
-    Ware.init_class(db['Ware'],     "templates/WareVariables.txt")
+def init_classes():
+    Ware.init_class(db['Ware'], "templates/WareVariables.txt")
     Client.init_class(db['Client'], "templates/ClientVariables.txt")
-    Wagon.init_class(db['Wagon'],   "templates/WagonVariables.txt")
+    Wagon.init_class(db['Wagon'], "templates/WagonVariables.txt")
 
-    #1 method for queries and print
-    cursor = db.Mercancia.aggregate(Q3)
 
+def fulfill_data():
+    dataFile = open('templates/tesm.data', 'r')
+    data = json.load(dataFile)
+
+    wagons = []
+    clients = []
+
+    for line in data:
+        cl = Client(**line['client'])
+        if cl not in clients:
+            clients.append(cl)
+            cl.save()
+
+        merc = Ware(**line['ware'])
+        merc.update(**{"name": cl.name})
+        merc.save()
+
+        wag = Wagon(**line['wagon'])
+        if wag not in wagons:
+            wag.assignMercancia(merc)
+            wagons.append(wag)
+        else:
+            for wagon in wagons:
+                if wagon == wag:
+                    wagon.assignMercancia(merc)
+
+    for wagon in wagons:
+        wagon.save()
+
+
+def query(query):
+    cursor = db.Mercancia.aggregate(query)
     while cursor.alive:
         document = cursor.next()
         print(document)
 
-    #2 method to fulfill
-    # RELLENAR
-    # dataFile = open('tesm.data', 'r')
-    # data = json.load(dataFile)
-    #
-    # Mercancia.init_class(db['Mercancia'], "MercanciaVariables.txt")
-    # Cliente.init_class(db['Cliente'], "ClienteVariables.txt")
-    # Vagon.init_class(db['Vagon'], "VagonVariables.txt")
-    #
-    # vagones = []
-    # clientes   = []
-    #
-    #
-    # for line in data:
-    #     cl = Cliente(**line['cliente'])
-    #     if cl not in clientes:
-    #         clientes.append(cl)
-    #         cl.save()
-    #
-    #     merc = Mercancia(**line['mercancia'])
-    #     merc.update(**{"nombre": cl.nombre})
-    #     merc.save()
-    #
-    #     vag = Vagon(**line['vagon'])
-    #     if vag not in vagones:
-    #         vag.assignMercancia(merc)
-    #         vagones.append(vag)
-    #     else:
-    #         for vagon in vagones:
-    #             if vagon == vag:
-    #                 vagon.assignMercancia(merc)
-    #
-    # for vagon in vagones:
-    #     vagon.save()
-    #RELLENAR
+
+if __name__ == '__main__':
+
+    client = MongoClient(host=['mongodb://127.0.0.1:27017'])
+    db = client['TrainProject']
+
+    init_classes()
+    fulfill_data()
+
+    query(Q3)

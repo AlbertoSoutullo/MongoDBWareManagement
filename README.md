@@ -30,7 +30,7 @@ About the <b>Wagon</b>:
 
 Since we know that maybe in the future we can modify and increment variables on our database, we will include obligatory variables, and addmited varialbes in .txt.
 
-In order to test this, we will perform some querys:
+In order to test this, we will perform some queries:
 <ul>
   <li>1. List all wares of a client given.</li>
   <li>2. List every wares with origin and destination given.</li>
